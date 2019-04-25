@@ -168,3 +168,46 @@ if (!vector.contains(element))
 vector.add(element);
 
 contains and add both sync, but the combination is not. Also degrades performance.
+
+## 2.5. Liveness and Performance
+
+Limiting data to just one thread reduces performance, as a servlet will be able to entertain only ne request at a time,
+instead, make sync block small, so that threads don't wait for a long time
+
+@ThreadSafe
+public class CachedFactorizer implements Servlet {
+@GuardedBy("this") private BigInteger lastNumber;
+@GuardedBy("this") private BigInteger[] lastFactors;
+@GuardedBy("this") private long hits;
+@GuardedBy("this") private long cacheHits;
+public synchronized long getHits() { return hits; }
+public synchronized double getCacheHitRatio() {
+return (double) cacheHits / (double) hits;
+}
+public void service(ServletRequest req, ServletResponse resp) {
+BigInteger i = extractFromRequest(req);
+BigInteger[] factors = null;
+synchronized (this) {
+++hits;
+if (i.equals(lastNumber)) {
+++cacheHits;
+factors = lastFactors.clone();
+}
+}
+if (factors == null) {
+factors = factor(i);
+synchronized (this) {
+lastNumber = i;
+lastFactors = factors.clone();
+}
+}
+encodeIntoResponse(resp, factors);
+
+- no more big sync block, sync only essential part
+- no AtomicLong, as we are using sync,
+- other threads can do CPU intensive work without blocking
+
+There is frequently a tension between simplicity and performance. When implementing a synchronization policy, resist
+the temptation to prematurely sacrifice simplicity (potentially compromising safety) for the sake of performance.
+Avoid holding locks during lengthy computations or operations at risk of not completing quickly such as network or
+console I/O.
