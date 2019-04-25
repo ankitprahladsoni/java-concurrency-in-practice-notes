@@ -120,3 +120,30 @@ encodeIntoResponse(resp, factors);
 }
 }
 Fixed problems, still bad. Atomic, but degrades perfromance.
+
+### 2.3.2. Reentrancy
+
+If thread A wants to aquire lock held by B, it has to wait.
+If A wants to aquire lock held by A, no need to wait.
+intrinsic locks are reentrant.
+locks are acquired on a per􀍲thread rather than per􀍲invocation basis.
+Reentrancy is implemented by
+associating with each lock an acquisition count and an owning thread. When the count is zero, the lock is considered
+unheld. When a thread acquires a previously unheld lock, the JVM records the owner and sets the acquisition count to
+one. If that same thread acquires the lock again, the count is incremented, and when the owning thread exits the
+synchronized block, the count is decremented. When the count reaches zero, the lock is released.
+
+Helps avoid blocking in the below example.
+public class Widget {
+public synchronized void doSomething() {
+...
+}
+}
+public class LoggingWidget extends Widget {
+public synchronized void doSomething() {
+System.out.println(toString() + ": calling doSomething");
+super.doSomething();
+}
+}
+
+Thread A calls super class and then subclass, gets lock for both.
