@@ -147,3 +147,24 @@ super.doSomething();
 }
 
 Thread A calls super class and then subclass, gets lock for both.
+
+## 2.4. Guarding State with Locks
+
+use synchroized block to make two atomic operations as one.
+Use it only when writing the value? No, use synchronised block every time you access the variables.
+
+For each mutable state variable that may be accessed by more than one thread, all accesses to that variable must be
+performed with the same lock held. In this case, we say that the variable is guarded by that lock.
+
+Every shared, mutable variable should be guarded by exactly one lock. Make it clear to maintainers which lock that is.
+
+encapsule all fields and put in sync block or use lock
+but it can be easily forgotten for new methods to use sync or lock
+For every invariant that involves more than one variable, all the variables involved in that invariant must be guarded by
+the same lock.
+
+make all methods sync? Nah
+if (!vector.contains(element))
+vector.add(element);
+
+contains and add both sync, but the combination is not. Also degrades performance.
