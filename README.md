@@ -353,3 +353,25 @@ source.registerListener(safe.listener);
 return safe;
 }
 }
+
+## 3.3. Thread Confinement
+
+allow only one thread to work on an object.
+Swing, JDBC pool.
+
+### 3.3.1. Ad-hoc Thread Confinement
+
+responsibility for maintaining thread confinement falls entirely on the
+implementation. can be fragile because visibility
+modifiers or local variables, don't confine the object to the target thread.
+
+The decision to use thread confinement is often a consequence of the decision to implement a particular subsystem,
+such as the GUI, as a single threaded subsystem.
+It is safe to perform read modify write operations on
+shared volatile variables as long as you ensure that the volatile variable is only written from a single thread. In this case,
+you are confining the modification to a single thread to prevent race conditions, and the visibility guarantees for volatile
+variables ensure that other threads see the most up to date value.
+Because of its fragility, ad hoc thread confinement should be used sparingly; if possible, use one of the stronger forms of
+thread confinement (stack confinement or ThreadLocal) instead.
+
+### 3.3.2. Stack Confinement
