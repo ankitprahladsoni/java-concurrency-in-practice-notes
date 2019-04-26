@@ -375,3 +375,29 @@ Because of its fragility, ad hoc thread confinement should be used sparingly; if
 thread confinement (stack confinement or ThreadLocal) instead.
 
 ### 3.3.2. Stack Confinement
+
+an object can only be reached through local
+variables. Local variables are intrinsically confined to the executing thread; they exist on the executing
+thread's stack, which is not accessible to other threads. it is simpler to maintain and less fragile than ad hoc
+thread confinement.
+
+public int loadTheArk(Collection<Animal> candidates) {
+SortedSet<Animal> animals;
+int numPairs = 0;
+Animal candidate = null;
+// animals confined to method, don't let them escape!
+animals = new TreeSet<Animal>(new SpeciesGenderComparator());
+animals.addAll(candidates);
+for (Animal a : animals) {
+if (candidate == null || !candidate.isPotentialMate(a))
+candidate = a;
+else {
+ark.load(new AnimalPair(candidate, a));
+++numPairs;
+candidate = null;
+}
+}
+return numPairs;
+}
+
+Using a non thread safe object in a within thread context is still thread safe.
