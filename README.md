@@ -126,7 +126,7 @@ Fixed problems, still bad. Atomic, but degrades perfromance.
 If thread A wants to aquire lock held by B, it has to wait.
 If A wants to aquire lock held by A, no need to wait.
 intrinsic locks are reentrant.
-locks are acquired on a per􀍲thread rather than per􀍲invocation basis.
+locks are acquired on a per thread rather than per invocation basis.
 Reentrancy is implemented by
 associating with each lock an acquisition count and an owning thread. When the count is zero, the lock is considered
 unheld. When a thread acquires a previously unheld lock, the JVM records the owner and sets the acquisition count to
@@ -211,3 +211,64 @@ There is frequently a tension between simplicity and performance. When implement
 the temptation to prematurely sacrifice simplicity (potentially compromising safety) for the sake of performance.
 Avoid holding locks during lengthy computations or operations at risk of not completing quickly such as network or
 console I/O.
+
+# 3. Sharing Objects
+
+We want not only to prevent one thread from
+modifying the state of an object when another is using it, but also to ensure that when a thread modifies the state of an
+object, other threads can actually see the changes that were made.
+
+## 3.1. Visibility
+
+public class NoVisibility {
+private static boolean ready;
+private static int number;
+private static class ReaderThread extends Thread {
+public void run() {
+while (!ready)
+Thread.yield();
+System.out.println(number);
+}
+}
+public static void main(String[] args) {
+new ReaderThread().start();
+number = 42;
+ready = true;
+}
+}
+this simple example may not give the desired output
+ReaderThread may never be able to read the new value of ready variable
+and the write to number may happen later than the print in ReaderThread
+it May! not always, but a possibility
+
+### 3.1.1. Stale Data
+
+avoid reading of stale data by syncing the whole value
+@NotThreadSafe
+public class MutableInteger {
+private int value;
+public int get() { return value; }
+public void set(int value) { this.value = value; }
+}
+
+@ThreadSafe
+public class SynchronizedInteger {
+@GuardedBy("this") private int value;
+public synchronized int get() { return value; }
+public synchronized void set(int value) { this.value = value; }
+}
+
+### 3.1.2. Non atomic 64 bit Operations
+
+When a thread reads a variable without synchronization, it may see a stale value, but at least it sees a value that was
+actually placed there by some thread rather than some random value. This safety guarantee is called out of thin air
+safety.
+Out of thin air safety applies to all variables, with one exception: 64 bit numeric variables (double and long) that are
+not declared volatile . The Java Memory Model requires fetch and store operations to be atomic,
+but for nonvolatile long and double variables, the JVM is permitted to treat a 64 bit read or write as two separate 32
+bit operations. If the reads and writes occur in different threads, it is therefore possible to read a nonvolatile long and
+get back the high 32 bits of one value and the low 32 bits of another.Thus, even if you don't care about stale values, it
+is not safe to use shared mutable long and double variables in multithreaded programs unless they are declared
+volatile or guarded by a lock.
+
+### 3.1.3. Locking and Visibility
