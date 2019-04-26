@@ -309,3 +309,47 @@ use only when all the following criteria are met:
   updates the value;
 - The variable does not participate in invariants with other state variables; and
 - Locking is not required for any other reason while the variable is being accessed.
+
+## 3.2. Publication and Escape
+
+Publishing= maing code available outside the current scope, like getters or passing as reference.
+compromise encapsulation
+publishing objects
+before they are fully constructed can compromise thread safety
+An object that is published when it should not have
+been is said to have escaped.
+another way to publish an inner class instance
+public class ThisEscape {
+public ThisEscape(EventSource source) {
+source.registerListener(
+new EventListener() {
+public void onEvent(Event e) {
+doSomething(e);
+}
+});
+}
+}
+When ThisEscape publishes the EventListener, it implicitly publishes the
+enclosing ThisEscape instance as well, because inner class instances contain a hidden reference to the enclosing
+instance.
+
+### 3.2.1. Safe Construction Practices
+
+Do not allow the this reference to escape during construction.
+like starting the thread from constructor, create, but don't start
+or use static methods to return object
+public class SafeListener {
+private final EventListener listener;
+private SafeListener() {
+listener = new EventListener() {
+public void onEvent(Event e) {
+doSomething(e);
+}
+};
+}
+public static SafeListener newInstance(EventSource source) {
+SafeListener safe = new SafeListener();
+source.registerListener(safe.listener);
+return safe;
+}
+}
