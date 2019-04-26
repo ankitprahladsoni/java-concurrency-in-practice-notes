@@ -4,8 +4,8 @@ count++ looks atomic, but isn't
 value is read, updated, and written.
 if two threads approach, both may read old value, increment and write incorrent value.
 
-9 -> 9+1 -> 10  
-9 -> 9+1 ->10  
+9 -> 9+1 -> 10
+9 -> 9+1 ->10
 ++ isn't atomic, to make it thread same, make this operation atomic.
 
 same with
@@ -13,12 +13,12 @@ same with
 ```java
 @NotThreadSafe
 public class LazyInitRace {
-    private ExpensiveObject instance = null;
-    public ExpensiveObject getInstance() {
-        if (instance == null)
-        instance = new ExpensiveObject();
-        return instance;
-    }
+  private ExpensiveObject instance = null;
+  public ExpensiveObject getInstance() {
+    if (instance == null)
+    instance = new ExpensiveObject();
+    return instance;
+  }
 }
 ```
 
@@ -26,7 +26,7 @@ if race condition? both thread will treat instance as null and get two different
 
 They seem atomic, but aren't.
 
-Check this out:  
+Check this out:
 @NotThreadSafe
 public class UnsafeCountingFactorizer implements Servlet {
 private long count = 0;
@@ -272,3 +272,40 @@ is not safe to use shared mutable long and double variables in multithreaded pro
 volatile or guarded by a lock.
 
 ### 3.1.3. Locking and Visibility
+
+When thread A executes a synchronized block, and subsequently thread B enters a
+synchronized block guarded by the same lock, the values of variables that were visible to A prior to releasing the lock
+are guaranteed to be visible to B upon acquiring the lock.Without synchronization, there is
+no such guarantee.
+![img](images/3_1_3_a.png)
+Locking is not just about mutual exclusion; it is also about memory visibility. To ensure that all threads see the most up
+to date values of shared mutable variables, the reading and writing threads must synchronize on a common lock.
+
+### 3.1.4. Volatile Variables
+
+When a field is declared volatile, the compiler and
+runtime are put on notice that this variable is shared and that operations on it should not be reordered with other
+memory operations. not cached in registers or in caches where they are hidden from other
+processors, read of a volatile variable always returns the most recent write by any thread.
+accessing a volatile
+variable performs no locking , cannot cause the executing thread to block, making volatile variables a lighter
+weight synchronization mechanism than synchronized.
+
+writing a volatile variable is like exiting a synchronized block and reading a volatile variable is like entering
+a synchronized block. However code that
+relies on volatile variables for visibility of arbitrary state is more fragile and harder to understand than code that uses
+locking.
+Use only when they simplify implementing and verifying your synchronization policy; avoid when verifying correctness would require subtle reasoning about visibility. Good uses is ensuring the visibility of their own state, that of the object they refer to, or indicating that an
+important lifecycle event (such as initialization or shutdown) has occurred.
+
+most common use a
+completion, interruption, or status flag,
+For example, the semantics of volatile are
+not strong enough to make the increment operation (count++) atomic.
+Locking can guarantee both visibility and atomicity; volatile variables can only guarantee visibility.
+use only when all the following criteria are met:
+
+- Writes do not depend on its current value, or you can ensure that only a single thread ever
+  updates the value;
+- The variable does not participate in invariants with other state variables; and
+- Locking is not required for any other reason while the variable is being accessed.
