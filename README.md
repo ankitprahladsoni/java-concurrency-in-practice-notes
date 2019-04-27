@@ -401,3 +401,32 @@ return numPairs;
 }
 
 Using a non thread safe object in a within thread context is still thread safe.
+
+### 3.3.3. ThreadLocal
+
+allows you to associate a per thread
+value with a value holding object. Thread-Local provides get and set accessor methods that maintain a separate copy
+of the value for each thread that uses it, so a get returns the most recent value passed to set from the currently
+executing thread.
+often used to prevent sharing in designs based on mutable Singletons or global variables.
+
+```java
+private static ThreadLocal<Connection> connectionHolder = new ThreadLocal<Connection>() {
+    public Connection initialValue() {
+        return DriverManager.getConnection(DB_URL);
+    }
+};
+public static Connection getConnection() {
+    return connectionHolder.get();
+}
+```
+
+Conceptually, you can think of a ThreadLocal<T> as holding a Map<Thread,T> that stores the thread specific
+values, though not how it is actually implemented. The thread specific values are stored in the Thread object
+itself; when the thread terminates, the thread specific values can be garbage collected.
+If you are porting a single threaded application to a multithreaded environment, you can preserve thread safety by
+converting shared global variables into ThreadLocals, if the semantics of the shared globals permits this; an application
+wide cache would not be as useful if it were turned into a number of thread local caches.
+
+Like global variables, thread local variables can detract from reusability
+and introduce hidden couplings among classes, and should therefore be used with care.
