@@ -430,3 +430,71 @@ wide cache would not be as useful if it were turned into a number of thread loca
 
 Like global variables, thread local variables can detract from reusability
 and introduce hidden couplings among classes, and should therefore be used with care.
+
+## 3.4. Immutability
+
+state cannot be changed after construction. are inherently
+thread safe; their invariants are established by the constructor, and if their state cannot be changed, these invariants
+always hold.
+
+An object is immutable if:
+
+- Its state cannot be modified after construction;
+- All its fields are final; and
+- It is properly constructed (the this reference does not escape during construction).
+
+Immutable objects can still use mutable objects internally to manage their state.The last
+requirement, proper construction, is easily met since the constructor does nothing that would cause the this reference
+to become accessible to code other than the constructor and its caller.
+
+```java
+@Immutable
+public final class ThreeStooges {
+    private final Set<String> stooges = new HashSet<String>();
+    public ThreeStooges() {
+        stooges.add("Moe");
+        stooges.add("Larry");
+        stooges.add("Curly");
+    }
+    public boolean isStooge(String name) {
+        return stooges.contains(name);
+    }
+}
+```
+
+There is a difference between an object being immutable and the reference to it being
+immutable.
+
+Make variables final
+return a copy of array instead of returning it directly.
+
+## 3.5. Safe Publication
+
+To publish an object safely, both the reference to the object and the object's state must be made visible to other
+threads at the same time. A properly constructed object can be safely published by:
+
+- Initializing an object reference from a static initializer;
+- Storing a reference to it into a volatile field or AtomicReference;
+- Storing a reference to it into a final field of a properly constructed object; or
+- Storing a reference to it into a field that is properly guarded by a lock.
+
+The publication requirements for an object depend on its mutability:
+
+- Immutable objects can be published through any mechanism;
+- Effectively immutable objects must be safely published;
+- Mutable objects must be safely published, and must be either thread safe or guarded by a lock.
+
+The most useful policies for using and sharing objects in a concurrent program are:
+
+Thread confined. A thread confined object is owned exclusively by and confined to one thread, and can be modified by
+its owning thread.
+
+Shared read only. A shared read only object can be accessed concurrently by multiple threads without additional
+synchronization, but cannot be modified by any thread. Shared read only objects include immutable and effectively
+immutable objects.
+
+Shared thread safe. A thread safe object performs synchronization internally, so multiple threads can freely access it
+through its public interface without further synchronization. Like ConcurrentHashMap
+
+Guarded. A guarded object can be accessed only with a specific lock held. Guarded objects include those that are
+encapsulated within other thread safe objects and published objects that are known to be guarded by a specific lock.
