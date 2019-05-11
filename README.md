@@ -498,3 +498,20 @@ through its public interface without further synchronization. Like ConcurrentHas
 
 Guarded. A guarded object can be accessed only with a specific lock held. Guarded objects include those that are
 encapsulated within other thread safe objects and published objects that are known to be guarded by a specific lock.
+
+# 4 Composing Objects
+
+The design process for a thread􀍲safe class should include these three basic elements:
+
+- Identify the variables that form the object's state;
+- Identify the invariants that constrain the state variables;
+- Establish a policy for managing concurrent access to the object's state.
+
+You cannot ensure thread safety without understanding an object's invariants and post-conditions. Constraints on the
+valid values or state transitions for state variables can create atomicity and encapsulation requirements.
+
+Encapsulating data within an object confines access to the data to the object's methods, making it easier to ensure that
+the data is always accessed with the appropriate lock held.
+Confined objects must not escape their intended scope
+
+Always return a copy.
